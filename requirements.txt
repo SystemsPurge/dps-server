@@ -1,0 +1,9 @@
+pandapower
+numba
+junix
+cimpy
+pandas
+openpyxl
+uvicorn
+fastapi
+python-multipart
