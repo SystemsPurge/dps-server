@@ -1,16 +1,11 @@
-# SPDX-FileCopyrightText: 2024, Institute for Automation of Complex Power Systems, EONERC, RWTH Aachen University
-# SPDX-License-Identifier: Apache-2.0
-# Specify parent image. Please select a fixed tag here.
 ARG BASE_IMAGE=sogno/dpsim:dev
 
 FROM ${BASE_IMAGE} as builder
 
 USER root
 
-# Removing already installed python package
 RUN pip uninstall dpsim
 
-# Cloning and building it directly from git
 RUN cd /tmp && \
     git clone --recurse-submodules https://github.com/gnakti/dpsim.git && \
     cd /tmp/dpsim && \
@@ -24,6 +19,10 @@ RUN cd /tmp && \
 FROM ${BASE_IMAGE}
 
 USER root
+ENV DPS_ROOT=/dpsroot
+ENV DPS_EXPORT=true
+ENV DPS_MODE=local
+ENV DPS_LOG_LEVEL=INFO
 
 # Copy dpsim wheel package from base container & install the packages
 COPY --from=builder /temp/*.whl /tmp/
@@ -31,13 +30,7 @@ RUN	pip install /tmp/*.whl
 
 RUN pip install pandapower numba junix cimpy pandas openpyxl uvicorn fastapi python-multipart
 RUN mkdir /dps
+COPY src /dps
 RUN mkdir /dpsroot
 WORKDIR /dps
-# ARG USERNAME=dpsim
-# RUN useradd -ms /bin/sh ${USERNAME}
-
-# USER ${USERNAME}
-
-# WORKDIR /home/${USERNAME}/
-
-#ENTRYPOINT ["jupyter", "lab" ,"--ip","0.0.0.0","--allow-root","--no-browser"]
+CMD ["sh","-c","sleep 25 && uvicorn api-script:app --host 0.0.0.0 --port 5000"]

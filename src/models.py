@@ -37,7 +37,7 @@ class interface:
     _d:delegate
     l:Logger
     _mode:str
-    def __init__(self):
+    def __init__(self,name:str):
         self._mode = interface._get_env('DPS_MODE')
         log_level = interface._get_env('DPS_LOG_LEVEL')
         
@@ -45,7 +45,7 @@ class interface:
             raise Exception(f'Unrecognized log level: {log_level}')
         
         basicConfig(level=_nameToLevel[log_level])
-        self.l = getLogger('DPS')
+        self.l = getLogger(name.upper())
         self.l.info('Starting with: ')
         self.l.info(f'DPS_LOG_LEVEL={log_level}')
         self.l.info(f'DPS_MODE={self._mode}')

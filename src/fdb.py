@@ -15,7 +15,12 @@ class fdb:
         def __init__(self,name:str,score:int):
             self.name = name
             self.score = score
-        pass
+
+        def __eq__(self, other):
+            return self.score == other.score
+
+        def __lt__(self, other):
+            return self.score < other.score
     class __tstype(str):
         pass
     class __subdir(str):
