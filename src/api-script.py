@@ -8,7 +8,7 @@ import json
 from typing import Any
 
 
-i = interface()
+i = interface('API')
 app = FastAPI()
 export = interface._get_env('DPS_EXPORT') == 'true'
     
@@ -44,7 +44,7 @@ async def post_jts(tstype:str,tsname:str,body:dict[str,Any]):
         tsname += '.json'
         i._d._tsaddraw(tstype,tsname,content)
     except Exception as rle:
-        raise HTTPException(status_code=400,detail=f'Error listing {tstype}: {rle}')
+        raise HTTPException(status_code=400,detail=f'Error adding json {tsname} of {tstype}: {rle}')
     
 #get ts as json
 @app.get("/jts/{tstype}/{tsname}")
@@ -53,7 +53,7 @@ async def get_jts(tstype:str,tsname:str):
     try:
         return i._d._jtsget(tstype,tsname)
     except Exception as rle:
-        raise HTTPException(status_code=400,detail=f'Error listing {tstype}: {rle}')
+        raise HTTPException(status_code=400,detail=f'Error getting json {tsname} of {tstype}: {rle}')
 
 
 #delete resource
@@ -107,10 +107,9 @@ async def run_sim(p:_params):
 if export:
     e = exp()
     e.run()
-    test = "SOL_POW__MV{type=\"v\",sim=\"simwppf\",num=\"202101\"} 57902.11685262137 1752671987888\n"
-    @app.get("/metrics",response_class=PlainTextResponse)
-    async def get_metrics():
+    @app.get("/metrics/{resname}",response_class=PlainTextResponse)
+    async def get_metrics(resname:str):
             try:
-                return e.get_promstr()
+                return e.get(resname)
             except Exception:
                 raise HTTPException(status_code=400,detail=f'Error running simulation: {traceback.format_exc()}')

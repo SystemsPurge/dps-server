@@ -26,7 +26,7 @@ class cli(interface):
     p:params
     __flag_map:dict[str,flag]
     def __init__(self):
-        super().__init__()
+        super().__init__('cli')
         self.p = params()
         def mklset(attr:str)->Callable[[Any],None]:
             return lambda x: self.p.__setattr__(attr,x)
