@@ -85,19 +85,14 @@ class exp(interface):
         try:
             #create task
             rq.post(f'{self.__met_url}/task',json={'name':sim,'apps':[],'categories':[],'metrics_path':f'/metrics/{sim}'})
-            
             #create category
             rq.post(f'{self.__met_url}/category',json=self.__get_cat(sim))
-            
             #create app
             rq.post(f'{self.__met_url}/app',json=self.__get_app(sim))
-            
             #add category to task
             rq.put(f'{self.__met_url}/task/{sim}/category/{sim}')
-            
             #add app to task
             rq.put(f'{self.__met_url}/task/{sim}/app',json=self.__get_params(sim))
-            
             #start task
             rq.post(f'{self.__met_url}/op/{sim}/start',json=self.__get_freeze(sim))
         except Exception as e:
@@ -107,13 +102,10 @@ class exp(interface):
         try:
             #stop task
             rq.post(f'{self.__met_url}/op/{sim}/stop')
-            
             #delete task
             rq.delete(f'{self.__met_url}/task/{sim}')
-            
             #delete app
             rq.delete(f'{self.__met_url}/app/{sim}')
-            
             #delete category
             rq.delete(f'{self.__met_url}/category/{sim}')
         except Exception as e:
@@ -186,63 +178,29 @@ class exp(interface):
             'metric_aliases':['current','voltage','active_power','reactive_power']
         }
     
+    def __get_metric(self,sim:str,name:str,unit:str)->dict[str,Any]:
+        return {
+                    'legend_key':'{{comp}}',
+                    'unit':unit,
+                    'query':{
+                        'name':name,
+                        'labels':{
+                            'sim':sim
+                        },
+                        "aggr":{
+                            "type":"none"
+                        }
+                    }
+                }
+    
     def __get_app(self,sim:str)->dict[str,Any]:
         return {
             'name':sim,
             'metric_template':{
-                'voltage':{
-                    'legend_key':'{{comp}}',
-                    'unit':'V',
-                    'query':{
-                        'name':'voltage',
-                        'labels':{
-                            'sim':sim
-                        },
-                        "aggr":{
-                            "type":"none"
-                        }
-                    }
-                },
-                'current':{
-                    'legend_key':'{{comp}}',
-                    'unit':'A',
-                    'query':{
-                        'name':'current',
-                        'labels':{
-                            'sim':sim
-                        },
-                        "aggr":{
-                            "type":"none"
-                        }
-                    }
-                },
-                'active_power':{
-                    'legend_key':'{{comp}}',
-                    'unit':'MW',
-                    'query':{
-                        'name':'active_power',
-                        'labels':{
-                            'sim':sim
-                        },
-                        "aggr":{
-                            "type":"none"
-                        }
-
-                    }
-                },
-                'reactive_power':{
-                    'legend_key':'{{comp}}',
-                    'unit':'MVAR',
-                    'query':{
-                        'name':'reactive_power',
-                        'labels':{
-                            'sim':sim
-                        },
-                        "aggr":{
-                            "type":"none"
-                        }
-                    }
-                },
+                'voltage':self.__get_metric(sim,'voltage','V'),
+                'current':self.__get_metric(sim,'current','A'),
+                'active_power':self.__get_metric(sim,'active_power','MW'),
+                'reactive_power':self.__get_metric(sim,'reactive_power','MVAR'),
             }
         }
         
