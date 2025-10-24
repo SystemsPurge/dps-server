@@ -5,7 +5,7 @@ from logging import Logger,getLogger
 import pandas as pd
 from pandas import DataFrame
 import pandapower as pp
-from shutil import rmtree,move
+from shutil import rmtree
 from pandapower.converter import from_cim as cim2pp
 import os 
 import re
@@ -21,8 +21,6 @@ class base_sim:
             domain:str = 'SP',
             solver:str = 'NRP',
             opf:bool=False,
-            dspf:bool=False,
-            pppf:bool=False,
             use_profile:str = None,
             use_xml:str = None,
             replace_map:dict[str,str] = None
@@ -33,8 +31,6 @@ class base_sim:
         self.duration = duration
         self.timestep = timestep
         self.opf = opf
-        self.dspf = dspf
-        self.pppf = pppf
         self.use_xml = use_xml
         self.use_profile = use_profile
         self.replace_map = replace_map
@@ -69,8 +65,6 @@ class state:
     configure:str = None
     preproc_profile:str = None
     opf:str = None
-    dspf:str = None
-    pppf:str = None
     sim:str = None
     
     def __init__(self):
@@ -87,11 +81,9 @@ class simulator(base_sim):
     xml:list[str]
     log:Logger
     __opf:Optional[DataFrame]
-    __pppf:Optional[DataFrame]
     __sim_names:list[str]
     __profile_names:set[str]
     __opf_names:set[str]
-    __pppf_names:set[str]
     __get_profile: Callable[[str,str],None]
     __loop:Callable
     __time:list[str]
@@ -107,14 +99,12 @@ class simulator(base_sim):
         domain:str = 'SP',
         solver:str = 'NRP',
         opf:bool=False,
-        dspf:bool=False,
-        pppf:bool=False,
         use_profile:str = None,
         use_xml:str = None,
         replace_map:dict[str,str] = None
     ):
         super().__init__(
-            name,freq,duration,timestep,domain,solver,opf,dspf,pppf,use_profile,use_xml,replace_map
+            name,freq,duration,timestep,domain,solver,opf,use_profile,use_xml,replace_map
         )
         self.log = getLogger(f'SIM-{self.name}')
 
@@ -194,24 +184,12 @@ class simulator(base_sim):
             def repl0(comp:str,ts:str=None)->None:
                 if comp in self.__opf_names:
                     try:
-                        self.sim.get_idobj_attr(comp,'P').set(self.__opf[self.__pppf['name'] == comp]['active power (MW)']*simulator.mw_w)
-                        self.sim.get_idobj_attr(comp,'Q').set(self.__opf[self.__pppf['name'] == comp]['reactive power (MVAR)']*simulator.mw_w)
+                        self.sim.get_idobj_attr(comp,'P').set(self.__opf[self.__opf['name'] == comp]['active power (MW)']*simulator.mw_w)
+                        self.sim.get_idobj_attr(comp,'Q').set(self.__opf[self.__opf['name'] == comp]['reactive power (MVAR)']*simulator.mw_w)
                         self.log.debug(f'Found opf value for {comp}')
                     except Exception:
                         pass
             funcs.append(repl0)
-            
-        if self.pppf:
-            self.__run_pppf(files)
-            def repl1(comp:str,ts:str=None)->float:
-                if comp in self.__pppf_names:
-                    try:
-                        self.sim.get_idobj_attr(comp,'P').set(self.__pppf[self.__pppf['name'] == comp]['active power (MW)']*simulator.mw_w)
-                        self.sim.get_idobj_attr(comp,'Q').set(self.__pppf[self.__pppf['name'] == comp]['reactive power (MVAR)']*simulator.mw_w)
-                        self.log.debug(f'Found pppf value for {comp}')
-                    except Exception:
-                        pass
-            funcs.append(repl1)
         
         if len(funcs) == 0:
             def l():
@@ -245,33 +223,6 @@ class simulator(base_sim):
                     self.__stop()
         self.__loop = l
     
-    def __run_pppf(self,files):
-        self.log.info('Running opf')
-        net:pp.pandapowerNet = cim2pp.from_cim(file_list=files,use_GL_or_DL_profile='DL')
-        pp.runpp(net)
-        base = pd.concat([net.shunt['name'], net.res_shunt], axis=1)
-        for k in ['load','gen','sgen']:
-            base = pd.concat([pd.concat([net[k]['name'], net[f'res_{k}']], axis=1),base])
-            
-        self.__pppf = base[['p_mw','q_mvar','name']]
-        self.__pppf.rename({'p_mw':'active power (MW)','q_mvar':'reactive power (MVAR)'},inplace=True,axis=1)
-        self.__pppf_names = set(self.__pppf['name'].values)
-    
-    def __run_pf(self,files):
-        self.log.info('Running dspf')
-        reader = dpsim.CIMReader(self.name)
-        systempf = reader.loadCIM(self.freq, files, dpsim.Domain.SP, dpsim.PhaseType.Single, dpsim.GeneratorType.PVNode)
-        simpf = dpsim.Simulation(f'{self.name}_pf')
-        simpf.set_system(systempf)
-        simpf = dpsim.Simulation(self.name)
-        simpf.set_time_step(self.timestep)
-        simpf.set_final_time(self.duration)
-        simpf.set_domain(dpsim.Domain.SP)
-        simpf.set_solver(dpsim.Solver.NRP)
-        simpf.set_solver_component_behaviour(dpsim.SolverBehaviour.Initialization)
-        simpf.run()
-        self.system.init_with_powerflow(systempf,self.domain)
-    
     def __run_opf(self,files)->None:
         self.log.info('Running opf')
         net:pp.pandapowerNet = cim2pp.from_cim(file_list=files,use_GL_or_DL_profile='DL')
@@ -295,11 +246,8 @@ class simulator(base_sim):
     def __set_sys(self,files:list[str])->None:
         self.log.info('Setting system')
         self.log.info(files)
-        if self.dspf:
-            self.__run_pf(files)
-        else:
-            reader = dpsim.CIMReader(self.name)
-            self.system = reader.loadCIM(self.freq, files, self.domain, dpsim.PhaseType.Single, dpsim.GeneratorType.PVNode)
+        reader = dpsim.CIMReader(self.name)
+        self.system = reader.loadCIM(self.freq, files, self.domain, dpsim.PhaseType.Single, dpsim.GeneratorType.PVNode)
         self.sim.set_system(self.system)
         self.__sim_names = [k for k, v in self.system.list_idobjects().items() if  v== 'SP::Ph1::Load' or  v== 'SP::Ph1::Shunt' or  v== 'SP::Ph1::SynchronGenerator']
         

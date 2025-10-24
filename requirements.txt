@@ -7,3 +7,4 @@ openpyxl
 uvicorn
 fastapi
 python-multipart
+requests

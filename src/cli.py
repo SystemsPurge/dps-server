@@ -35,10 +35,8 @@ class cli(interface):
             '-d':flag(mklset('duration'),True,cli.__valid_num),
             '-t':flag(mklset('timestep'),True,cli.__valid_num),
             '-opf':flag(mklset('opf'),True,cli.__valid_bool),
-            '-dspf':flag(mklset('dspf'),True,cli.__valid_bool),
-            '-pppf':flag(mklset('pppf'),True,cli.__valid_bool),
-            '-up':flag(mklset('use_profile'),True,cli.__valid_path),
-            '-ux':flag(mklset('use_xml'),True,cli.__valid_path),
+            '-up':flag(mklset('use_profile'),True,cli.__valid_str),
+            '-ux':flag(mklset('use_xml'),True,cli.__valid_str),
             '-dom':flag(mklset('domain'),True,cli.__valid_str),
             '-s':flag(mklset('solver'),True,cli.__valid_str),
         }
