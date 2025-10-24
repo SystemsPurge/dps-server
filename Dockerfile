@@ -3,10 +3,12 @@ USER root
 ENV DPS_ROOT=/dpsroot
 ENV DPS_MODE=local
 ENV DPS_LOG_LEVEL=INFO
+ENV DPS_DEFAULTS=/dps/defaults.json
 
 RUN pip install pandapower numba junix cimpy pandas openpyxl uvicorn fastapi python-multipart
 RUN mkdir /dps
 COPY src /dps
+COPY defaults.json /dps
 RUN mkdir /dpsroot
 WORKDIR /dps
 RUN echo -e "#!/bin/bash\nexec python /dps/cli-script.py \"\$@\"" > /usr/local/bin/dps \
