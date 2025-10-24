@@ -9,8 +9,6 @@ class params:
     duration: int
     timestep: float
     opf: bool
-    dspf:bool
-    pppf:bool
     use_profile:Optional[str] = None
     replace_map:Optional[dict[str,str]] = None
     use_xml:str = None

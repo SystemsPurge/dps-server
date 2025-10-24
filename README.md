@@ -4,7 +4,6 @@
 # ENV
 
 - `DPS_ROOT` : directory of files database
-- `DPS_EXPORT` : continously export simulation results as prometheus metrics
 - `DPS_MODE` : work with a local file database, or query a remote dps-server
 - `DPS_LOG_LEVEL` : all the log levels supported by the python logging module
 - `DPS_DEFAULTS` : path to default simulation parameters when using cli
@@ -31,8 +30,6 @@ Simulation runs return no results, instead results need to be retrieved afterwar
     - `-d` : Duration
     - `-t` : Timestep
     - `-opf` : Perform a pandapower optimal powerflow
-    - `-dspf` : Perform a dpsim powerflow
-    - `-pppf` : Perform a pandapower powerflow
     - `-up` : Use Profile data
     - `-ux` : Use XML files for system
     - `-dom` : Domain

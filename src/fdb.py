@@ -78,12 +78,15 @@ class fdb:
         self.l.info(f'Linking resource of {tstype} at {path}')
         self.__check(tstype)
         tsname = path.split('/')[-1]
-        self.l.info(f'Linking file {tsname}')
+        if not path.startswith('/'):
+            path = os.getcwd()+'/'+path
+        self.l.info(f'Linking file {tsname} in {path}')
         os.link(path,self.__path(fdb.__ts[tstype],tsname))
         
     def xmlget(self,xname:str)->list[str]:
         self.l.info(f'Getting xml file paths for{xname}')
         d = self.__path(fdb.__xmls,self.__search_files(xname,fdb.__xmls)[0])
+        print(os.scandir(d))
         return [f'{d}/{f}' for f in os.listdir(d)]
 
     def xmlput(self,archive:UploadFile)->None:
@@ -110,6 +113,8 @@ class fdb:
     def xmllink(self,path:str)->None:
         self.l.info(f'Linking xml directory {path}')
         tsname = path.split('/')[-1]
+        if not path.startswith('/'):
+            path = os.getcwd()+'/'+path
         os.symlink(path,self.__path(fdb.__xmls,tsname))
     
     def __check(self,tstype:__tstype)->None:

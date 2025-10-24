@@ -3,14 +3,12 @@ from fastapi.responses import PlainTextResponse
 from fdb import fdb
 from models import interface,_params
 import traceback
-from exporter import exp
 import json
 from typing import Any
 
 
 i = interface('API')
 app = FastAPI()
-export = interface._get_env('DPS_EXPORT') == 'true'
     
 #post ts of type <tstype>
 @app.post("/ts/{tstype}")
@@ -103,13 +101,3 @@ async def run_sim(p:_params):
         i._d._run(p.__dict__)
     except Exception:
         raise HTTPException(status_code=400,detail=f'Error running simulation: {traceback.format_exc()}')
-
-if export:
-    e = exp()
-    e.run()
-    @app.get("/metrics/{resname}",response_class=PlainTextResponse)
-    async def get_metrics(resname:str):
-            try:
-                return e.get(resname)
-            except Exception:
-                raise HTTPException(status_code=400,detail=f'Error running simulation: {traceback.format_exc()}')
