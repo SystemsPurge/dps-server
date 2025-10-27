@@ -28,6 +28,7 @@ jobs:
       - name: build
         uses: docker/build-push-action@v6
         with:
+          provenance: false
           context: .
           push: true
           tags: ${{ secrets.IMAGE_NAME }}:alpha0.1.0
