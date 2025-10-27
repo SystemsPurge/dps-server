@@ -1,5 +1,4 @@
 FROM soullessblob/cv-dpsim-builder:alpha AS builder
-USER root
 ENV DPS_ROOT=/dpsroot
 ENV DPS_MODE=local
 ENV DPS_LOG_LEVEL=INFO
