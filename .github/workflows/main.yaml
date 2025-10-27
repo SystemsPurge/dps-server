@@ -26,7 +26,7 @@ jobs:
       - name: build
         uses: docker/build-push-action@v5
         with:
-          options: "--network=host"
+          network: host
           context: .
           push: true
           tags: ${{ secrets.IMAGE_NAME }}:alpha0.1.0
