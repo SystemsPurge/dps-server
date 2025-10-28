@@ -13,10 +13,7 @@ that would not be explicitely passed to a cli command. Passed arguments will ove
 defaults.
 # Usage
 
-Run docker image `soullessblob/dps-server: alpha` or install requirements.txt ( in venv or otherwise )
-, source the sv-env.sh script and run `uvicorn api-script:app --host 0.0.0.0 --port 5000` (requires python).
-Source the client-env.sh to use the CLI to query the server. 
-Make sure to change the paths in the scripts beforehand.
+Run docker image `soullessblob/dps-server: alpha`.
 The fastapi documentation reflects the usage of the cli as well.
 Simulation runs return no results, instead results need to be retrieved afterwards, e.g with the cli
 `dps jtsget result <simname> -o <output path>` as json.
