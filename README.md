@@ -12,11 +12,10 @@ defaults file must be a json file with all the default simulation parameter valu
 that would not be explicitely passed to a cli command. Passed arguments will overwrite 
 defaults.
 # Usage
-
-Run docker image `soullessblob/dps-server: alpha`.
-The fastapi documentation reflects the usage of the cli as well.
+Run docker image `soullessblob/dps-server: alpha`. ( will be deprecated soon ).
 Simulation runs return no results, instead results need to be retrieved afterwards, e.g with the cli
 `dps jtsget result <simname> -o <output path>` as json.
+CLI commands mirror the server HTTP API.
 
 # CLI commands
 
@@ -48,7 +47,7 @@ Simulation runs return no results, instead results need to be retrieved afterwar
     - `<xmlpath>` : Path to xml (folder if local mode, otherwise an archive)
 7. `xdelete <xmlname>` : delete xml
     #### Args:
-    - `<tstype>` : keywords in file name
+    - `<xmlname>` : keywords in file name
 8. `jtsget <tstype> <tsname>` : get a timeseries in json
     #### Args:
     - `<tstype>` : timeseries type
