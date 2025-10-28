@@ -1,0 +1,28 @@
+stages:
+  - build_and_push
+build_image:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+      when: on_success
+  tags:
+    - docker-image-builder 
+  stage: build_and_push
+  before_script:
+    - docker info
+    - cd $CI_PROJECT_DIR
+
+  script:
+    - |
+      echo "Logging into GitLab Container Registry"
+      docker login $CI_REGISTRY \
+        -u $CI_REGISTRY_USER \
+        --password-stdin <<< "$CI_REGISTRY_PASSWORD"
+
+    - |
+      echo "Starting multi-platform build and push"
+      docker buildx build \
+        --provenance=false \
+        --platform linux/amd64,linux/arm64 \
+        --tag $CI_REGISTRY_IMAGE:alpha0.1.0 \
+        --push \
+        .
