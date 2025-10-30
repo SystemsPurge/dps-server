@@ -13,7 +13,7 @@ that would not be explicitely passed to a cli command. Passed arguments will ove
 defaults.
 # Usage
 Run docker image `registry.git.rwth-aachen.de/acs/public/dpsv:alpha0.1.0`:<br>
-`docker run -p 5000:5000 registry.git.rwth-aachen.de/acs/public/dpsv:alpha0.1.0`<br
+`docker run -p 5000:5000 registry.git.rwth-aachen.de/acs/public/dpsv:alpha0.1.0`<br>
 Then send your requests to localhost:5000.<br>
 Optionally mount a db folder instead of using http, then use the container cli,
 container mount path has to correspond to the DPS_ROOT variable.<br>
