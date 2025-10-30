@@ -12,18 +12,17 @@ defaults file must be a json file with all the default simulation parameter valu
 that would not be explicitely passed to a cli command. Passed arguments will overwrite 
 defaults.
 # Usage
-Run docker image `registry.git.rwth-aachen.de/acs/public/dpsv:alpha0.1.0`:
-`docker run -p 5000:5000 registry.git.rwth-aachen.de/acs/public/dpsv:alpha0.1.0`
-Then send your requests to localhost:5000.
+Run docker image `registry.git.rwth-aachen.de/acs/public/dpsv:alpha0.1.0`:<br>
+`docker run -p 5000:5000 registry.git.rwth-aachen.de/acs/public/dpsv:alpha0.1.0`<br
+Then send your requests to localhost:5000.<br>
 Optionally mount a db folder instead of using http, then use the container cli,
-container mount path has to correspond to the DPS_ROOT variable.
-`docker run --name dpsv -v $(pwd)/db:/dpsroot registry.git.rwth-aachen.de/acs/public/dpsv:alpha0.1.0`.
-You can then put your needed files (xml,profiles) directly in the corresponding db subfolder.
-Then use the cli:
-`docker exec dpsv sh -c 'dps run -ux <xml> -up <profile>...etc'`
-In this manner, results are retrieved from `<db folder>/result/<sim name>`.
+container mount path has to correspond to the DPS_ROOT variable.<br>
+`docker run --name dpsv -v $(pwd)/db:/dpsroot registry.git.rwth-aachen.de/acs/public/dpsv:alpha0.1.0`.<br>
+You can then put your needed files (xml,profiles) directly in the corresponding db subfolder,and use the cli:<br>
+`docker exec dpsv sh -c 'dps run -ux <xml> -up <profile>...etc'`<br>
+In this manner, results are retrieved from `<db folder>/result/<sim name>`.<br>
 It is advised to explicitely alternate the usage of the server and the cli, there is no
-resource coordination.
+resource coordination.<br>
 CLI commands mirror the server HTTP API.
 
 # CLI commands
