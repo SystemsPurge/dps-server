@@ -5,7 +5,24 @@ from models import interface,_params
 import traceback
 import json
 from typing import Any
-
+    
+def pivot_table(data: list[dict[str,Any]]):
+    time:list[int] = list(map(lambda x: x["timestamp"],data))
+    time.sort()
+    result = {
+        "active":{
+            "time":time
+        },
+        "reactive":{
+            "time":time
+        }
+    }
+    for d in data:
+        pt = d.get("power_type")
+        if d["profile_type"]+'_'+d["bus"] not in result[pt]:
+            result[pt][d["profile_type"]+'_'+d["bus"]] = []
+        result[pt][d["profile_type"]+'_'+d["bus"]].append(d["value"])
+    return result
 
 i = interface('API')
 app = FastAPI()
@@ -39,8 +56,12 @@ async def post_jts(tstype:str,tsname:str,body:dict[str,Any]):
     i.l.info(f'Got request to post resource {tstype} from body')
     try:
         content = json.dumps(body).encode('utf-8')
+        if "pivot" in content:
+            data = pivot_table(content["data"])
+        else:
+            data = content["data"]
         tsname += '.json'
-        i._d._tsaddraw(tstype,tsname,content)
+        i._d._tsaddraw(tstype,tsname,data)
     except Exception as rle:
         raise HTTPException(status_code=400,detail=f'Error adding json {tsname} of {tstype}: {rle}')
     
