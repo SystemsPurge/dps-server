@@ -1,4 +1,5 @@
 import os
+import json
 from typing import Optional, Any
 from delegate import delegate,client_delegate as cd, local_delegate as ld
 from logging import Logger,basicConfig,_nameToLevel,getLogger
@@ -33,10 +34,15 @@ class interface:
     _d:delegate
     l:Logger
     _mode:str
+    _defaults:dict[str,Any]
     def __init__(self,name:str):
         self._mode = interface._get_env('DPS_MODE')
         log_level = interface._get_env('DPS_LOG_LEVEL')
         
+        p = interface._get_env('DPS_DEFAULTS')
+        with open(p) as f:
+            self.l.info(f'DPS_DEFAULTS={p}')
+            self._defaults = json.loads(f)
         if log_level.upper() not in _nameToLevel:
             raise Exception(f'Unrecognized log level: {log_level}')
         

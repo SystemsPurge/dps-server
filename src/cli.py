@@ -43,10 +43,6 @@ class cli(interface):
         if self._mode == 'client':
             self.__flag_map['-ux'] = flag(mklset('use_xml'),True,cli.__valid_str)
             self.__flag_map['-up'] = flag(mklset('use_profile'),True,cli.__valid_str)
-        p = interface._get_env('DPS_DEFAULTS')
-        with open(p) as f:
-            self.l.info(f'DPS_DEFAULTS={p}')
-            self._defaults = json.load(f)
     
     def run(self,args:list[str]):
         copy = self._defaults

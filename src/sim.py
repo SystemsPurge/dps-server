@@ -103,6 +103,7 @@ class simulator(base_sim):
         use_xml:str = None,
         replace_map:dict[str,str] = None
     ):
+        print(name,freq,duration,timestep,domain,solver,opf,use_profile,use_xml,replace_map)
         super().__init__(
             name,freq,duration,timestep,domain,solver,opf,use_profile,use_xml,replace_map
         )

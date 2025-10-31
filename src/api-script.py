@@ -119,6 +119,9 @@ async def delete_xml(tsname:str):
 async def run_sim(p:_params):
     i.l.info(f'Got request to run simulation with parameters {p.model_dump()}')
     try:
+        for k,v in i._defaults:
+            if k not in p.__dict__:
+                p.__dict__[k] = v
         i._d._run(p.__dict__)
     except Exception:
         raise HTTPException(status_code=400,detail=f'Error running simulation: {traceback.format_exc()}')
