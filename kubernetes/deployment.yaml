@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dpsv-deployment
+  namespace: dpsv
+  labels:
+    app: dpsv
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dpsv
+  template:
+    metadata:
+      labels:
+        app: dpsv
+    spec:
+      containers:
+      - name: dpsv-container
+        image: registry.git.rwth-aachen.de/acs/public/dpsv:alpha0.1.0
+        volumeMounts:
+        - name: dpsv-volume
+          mountPath: /dpsroot
+      volumes:
+      - name: dpsv-volume
+        persistentVolumeClaim:
+          claimName: dpsv-pvc

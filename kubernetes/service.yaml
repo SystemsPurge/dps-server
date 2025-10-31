@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dpsv-svc
+  namespace: dpsv
+spec:
+  selector:
+    app: dpsv  # Matches the label on your pod
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+  type: ClusterIP

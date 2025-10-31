@@ -139,7 +139,6 @@ class local_delegate(delegate):
 
     def _run(self,body:dict[str,Any])->None:
         s.set_fdb(self.__fdb)
-        print(body)
         sim = s(**body)
         sim.configure()
         sim.start()
