@@ -6,17 +6,6 @@ import traceback
 import json
 from typing import Any
 
-default_map = {
-    '-n':"name",
-    '-f':"frequency",
-    '-d':"duration",
-    '-t':"timestep",
-    '-opf':"opf",
-    '-up':"use_profile",
-    '-ux':"use_xml",
-    '-dom':"domain",
-    '-s':"solver",
-}
 
 def pivot_table(data: list[dict[str,Any]]):
     time:list[int] = list(map(lambda x: x["timestamp"],data))
@@ -131,10 +120,6 @@ async def delete_xml(tsname:str):
 async def run_sim(p:_params):
     i.l.info(f'Got request to run simulation with parameters {p.model_dump()}')
     try:
-        for k,v in i._defaults:
-            n = default_map[k]
-            if n not in p.__dict__:
-                p.__dict__[n] = v
-        i._d._run(p.__dict__)
+        i._d._run(p.model_dump())
     except Exception:
         raise HTTPException(status_code=400,detail=f'Error running simulation: {traceback.format_exc()}')

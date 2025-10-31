@@ -86,7 +86,6 @@ class fdb:
     def xmlget(self,xname:str)->list[str]:
         self.l.info(f'Getting xml file paths for{xname}')
         d = self.__path(fdb.__xmls,self.__search_files(xname,fdb.__xmls)[0])
-        print(os.scandir(d))
         return [f'{d}/{f}' for f in os.listdir(d)]
 
     def xmlput(self,archive:UploadFile)->None:
