@@ -41,7 +41,6 @@ class interface:
         
         p = interface._get_env('DPS_DEFAULTS')
         with open(p) as f:
-            self.l.info(f'DPS_DEFAULTS={p}')
             self._defaults = json.loads(f)
         if log_level.upper() not in _nameToLevel:
             raise Exception(f'Unrecognized log level: {log_level}')
@@ -51,6 +50,7 @@ class interface:
         self.l.info('Starting with: ')
         self.l.info(f'DPS_LOG_LEVEL={log_level}')
         self.l.info(f'DPS_MODE={self._mode}')
+        self.l.info(f'DPS_DEFAULTS={p}')
         if self._mode == 'client':
             sv_addr = interface._get_env('DPS_ADDR')
             self.l.info(f'DPS_ADDR={sv_addr}')
