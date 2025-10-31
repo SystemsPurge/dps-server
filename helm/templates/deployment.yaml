@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: dpsv-deployment
-  namespace: dpsv
+  namespace: {{ .Release.Namespace }}
   labels:
     app: dpsv
 spec:
@@ -18,10 +18,14 @@ spec:
       containers:
       - name: dpsv-container
         image: registry.git.rwth-aachen.de/acs/public/dpsv:alpha0.1.0
+        {{- if .Values.persist }}
         volumeMounts:
         - name: dpsv-volume
           mountPath: /dpsroot
+        {{- end}}
+      {{- if .Values.persist }}
       volumes:
       - name: dpsv-volume
         persistentVolumeClaim:
           claimName: dpsv-pvc
+      {{- end}}

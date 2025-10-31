@@ -1,8 +1,9 @@
+{{- if .Values.persist }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: dpsv-pvc
-  namespace: dpsv
+  namespace: {{ .Release.Namespace }}
 spec:
   accessModes:
     - ReadWriteOnce
@@ -10,3 +11,4 @@ spec:
     requests:
       storage: 1Gi
   storageClassName: standard
+{{- end }}
