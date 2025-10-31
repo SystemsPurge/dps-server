@@ -12,6 +12,7 @@ defaults file must be a json file with all the default simulation parameter valu
 that would not be explicitely passed to a cli command. Passed arguments will overwrite 
 defaults.
 # Usage
+## Docker
 Run docker image `registry.git.rwth-aachen.de/acs/public/dpsv:alpha0.1.0`:<br>
 `docker run -p 5000:5000 registry.git.rwth-aachen.de/acs/public/dpsv:alpha0.1.0`<br>
 Then send your requests to localhost:5000.<br>
@@ -21,9 +22,12 @@ container mount path has to correspond to the DPS_ROOT variable.<br>
 You can then put your needed files (xml,profiles) directly in the corresponding db subfolder,and use the cli:<br>
 `docker exec dpsv sh -c 'dps run -ux <xml> -up <profile>...etc'`<br>
 In this manner, results are retrieved from `<db folder>/result/<sim name>`.<br>
-It is advised to explicitely alternate the usage of the server and the cli, there is no
-resource coordination.<br>
-CLI commands mirror the server HTTP API.
+
+## Helm
+To install chart locally on a kubernetes cluster, run <br>
+`helm install dpsv ./helm-dpsv --namespace dpsv --create-namespace`<br>
+From the root folder. Change persist to true in values, to persist the timeseries/results database <br>
+Server has no authentication, hiding it behind a proxy+ IDP is a good idea.
 
 # CLI commands
 
