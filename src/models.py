@@ -38,19 +38,20 @@ class interface:
     def __init__(self,name:str):
         self._mode = interface._get_env('DPS_MODE')
         log_level = interface._get_env('DPS_LOG_LEVEL')
-        
         p = interface._get_env('DPS_DEFAULTS')
-        with open(p) as f:
-            self._defaults = json.loads(f)
+        f = open(p,'r')
+        content = f.read()
+        self._defaults = json.loads(content)
+        f.close()
         if log_level.upper() not in _nameToLevel:
             raise Exception(f'Unrecognized log level: {log_level}')
-        
         basicConfig(level=_nameToLevel[log_level])
         self.l = getLogger(name.upper())
         self.l.info('Starting with: ')
         self.l.info(f'DPS_LOG_LEVEL={log_level}')
         self.l.info(f'DPS_MODE={self._mode}')
         self.l.info(f'DPS_DEFAULTS={p}')
+        self.l.info(f'Defaults: {self._defaults}')
         if self._mode == 'client':
             sv_addr = interface._get_env('DPS_ADDR')
             self.l.info(f'DPS_ADDR={sv_addr}')
