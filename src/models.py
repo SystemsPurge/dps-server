@@ -1,9 +1,14 @@
 import os
 import json
-from typing import Optional, Any
+from typing import Optional, Any,List,Dict
 from delegate import delegate,client_delegate as cd, local_delegate as ld
 from logging import Logger,basicConfig,_nameToLevel,getLogger
-from pydantic import BaseModel
+from pydantic import RootModel,BaseModel
+class JTS(RootModel[Dict[str, List[float]]]):
+    pass
+class LstRes(BaseModel):
+    lst:List[str]
+
 class params:
     name: str = os.urandom(6).hex()
     freq: int

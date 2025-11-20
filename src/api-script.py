@@ -1,7 +1,7 @@
-from fastapi import FastAPI,UploadFile,HTTPException
+from fastapi import FastAPI,UploadFile,HTTPException,File
 from fastapi.responses import PlainTextResponse
 from fdb import fdb
-from models import interface,_params
+from models import interface,_params,JTS,LstRes
 import traceback
 import json
 from typing import Any
@@ -30,7 +30,9 @@ app = FastAPI()
     
 #post ts of type <tstype>
 @app.post("/ts/{tstype}")
-async def post_ts(tstype:str,file:UploadFile):
+async def post_ts(tstype:str,file:UploadFile= File(
+    description="An excel/csv spreadsheet"
+)):
     i.l.info(f'Got request to add file {file.filename}')
     if not fdb.isallowed(file.filename):
         raise HTTPException(status_code=400,detail=f'File type of {file.filename} is not allowed')
@@ -42,10 +44,10 @@ async def post_ts(tstype:str,file:UploadFile):
 
 #list ts of type <tstype>
 @app.get("/ts/{tstype}")
-async def list_ts(tstype:str):
+async def list_ts(tstype:str)->LstRes:
     i.l.info(f'Got request to list resource {tstype}')
     try:
-        return {tstype:i._d._tslist(tstype)}
+        return {'lst':i._d._tslist(tstype)}
     except Exception as rle:
         raise HTTPException(status_code=400,detail=f'Error listing {tstype}: {rle}')
 
@@ -53,7 +55,7 @@ async def list_ts(tstype:str):
 
 #post ts as json
 @app.post("/jts/{tstype}/{tsname}")
-async def post_jts(tstype:str,tsname:str,body:dict[str,Any]):
+async def post_jts(tstype:str,tsname:str,body:JTS):
     i.l.info(f'Got request to post resource {tstype} from body')
     try:
         content = json.dumps(body).encode('utf-8')
@@ -68,7 +70,7 @@ async def post_jts(tstype:str,tsname:str,body:dict[str,Any]):
     
 #get ts as json
 @app.get("/jts/{tstype}/{tsname}")
-async def get_jts(tstype:str,tsname:str):
+async def get_jts(tstype:str,tsname:str)->JTS:
     i.l.info(f'Got request to get resource {tsname} of {tstype} as json')
     try:
         return i._d._jtsget(tstype,tsname)
@@ -87,7 +89,9 @@ async def delete_ts(tstype:str,tsname:str):
 
 #post xml
 @app.post("/xml")
-async def post_xml(file:UploadFile):
+async def post_xml(file:UploadFile=File(
+    description="zip archive containing CIM xml profiles"
+)):
     i.l.info(f'Got request to add file {file.filename}')
     if not file.filename.endswith('.zip'):
         raise HTTPException(status_code=400,detail=f'Only archives are allowed at this ep')
@@ -99,10 +103,10 @@ async def post_xml(file:UploadFile):
 
 #list xml
 @app.get("/xml")
-async def list_xml():
+async def list_xml()->LstRes:
     i.l.info(f'Got request to list resource xml')
     try:
-        return {'xml':i._d._xlist()}
+        return {'lst':i._d._xlist()}
     except Exception as rle:
         raise HTTPException(status_code=400,detail=f'Error listing xml: {rle}')
 
