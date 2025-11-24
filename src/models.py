@@ -6,8 +6,15 @@ from logging import Logger,basicConfig,_nameToLevel,getLogger
 from pydantic import RootModel,BaseModel
 class JTS(RootModel[Dict[str, List[float]]]):
     pass
+
+class JTSPost(BaseModel):
+    pivot: bool
+    data: JTS
 class LstRes(BaseModel):
     lst:List[str]
+
+class UpFileRes(BaseModel):
+    filename: str
 
 class params:
     name: str = os.urandom(6).hex()
