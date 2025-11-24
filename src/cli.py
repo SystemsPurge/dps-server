@@ -130,11 +130,12 @@ class cli(interface):
     
     @staticmethod
     def __valid_path(p:str)->str:
-        if p.startswith('.'):
-            p.removeprefix('.')
+        if p.startswith('./'):
+            p = p.removeprefix('./')
         if not p.startswith('/'):    
-            p = os.getcwd()+'/'+p
-        exp = r'^(\/[\w-]+)+(.[a-zA-Z]+?)$'
-        if re.match(exp,p) is not None:
+            p = os.path.join(os.getcwd(),p)
+        print(p)
+        exp = r'^(\/|((\/[\w. -_]+)+))$'
+        if re.fullmatch(exp,p) is not None:
             return p
         raise Exception(f'No such file or directory: {p}')

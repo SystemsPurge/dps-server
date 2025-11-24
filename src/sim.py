@@ -17,7 +17,7 @@ class base_sim:
             name:str = os.urandom(6).hex(),
             freq:int = 50,
             duration:int=5,
-            timestep:float=0.1,
+            timestep:float=1,
             domain:str = 'SP',
             solver:str = 'NRP',
             opf:bool=False,
@@ -132,7 +132,11 @@ class simulator(base_sim):
         self.sim.set_final_time(self.duration)
         self.sim.set_domain(self.domain)
         self.sim.set_solver(self.solver)
-        self.sim.set_solver_component_behaviour(dpsim.SolverBehaviour.Simulation)
+        if self.domain.name == 'SP':
+            self.sim.set_solver_component_behaviour(dpsim.SolverBehaviour.Initialization)
+            self.sim.do_init_from_nodes_and_terminals(True)
+        else:
+            self.sim.set_solver_component_behaviour(dpsim.SolverBehaviour.Simulation)
         self.__add_log()
     
     def __add_log(self)->None:
@@ -147,10 +151,11 @@ class simulator(base_sim):
                 logger.log_attribute(comp.name() + '_I', 'current_vector', comp)
                 logger.log_attribute(comp.name() + '_P', 'p_branch_vector', comp)
                 logger.log_attribute(comp.name() + '_Q', 'q_branch_vector', comp)
-            if comp.__class__.__name__ =='Transformer':
+            elif comp.__class__.__name__ =='Transformer':
                 logger.log_attribute(comp.name() + '_I', 'current_vector', comp)
                 logger.log_attribute(comp.name() + '_P', 'p_branch_vector', comp)
                 logger.log_attribute(comp.name() + '_Q', 'q_branch_vector', comp)
+            #else load/synchronous generator
 
         self.sim.add_logger(logger)
     
@@ -169,11 +174,14 @@ class simulator(base_sim):
             
             def getp(comp:str,ts:str=None)->float:
                 try:
+                    f = -1 if 'genstat' in comp else 1
+                    if f < 0:
+                        self.log.info(f"Found genstat: {comp}")
                     if f'{comp}_p' in self.__profile_names:
-                        self.sim.get_idobj_attr(comp,'P').set(profiles[profiles['DD/MM/YYYY HH:MM'] == ts][f'{comp}_p'].values[0]*simulator.mw_w)
+                        self.sim.get_idobj_attr(comp,'P').set(profiles[profiles['DD/MM/YYYY HH:MM'] == ts][f'{comp}_p'].values[0]*simulator.mw_w*f)
                         self.log.debug(f'Found P value for {comp} at {ts}')
                     if f'{comp}_q' in self.__profile_names:
-                        self.sim.get_idobj_attr(comp,'Q').set(profiles[profiles['DD/MM/YYYY HH:MM'] == ts][f'{comp}_q'].values[0]*simulator.mw_w)
+                        self.sim.get_idobj_attr(comp,'Q').set(profiles[profiles['DD/MM/YYYY HH:MM'] == ts][f'{comp}_q'].values[0]*simulator.mw_w*f)
                         self.log.debug(f'Found Q value for {comp} at {ts}')
                 except:
                     pass
@@ -183,9 +191,10 @@ class simulator(base_sim):
             self.__run_opf(files)
             def repl0(comp:str,ts:str=None)->None:
                 if comp in self.__opf_names:
+                    f = -1 if 'genstat' in comp else 1
                     try:
-                        self.sim.get_idobj_attr(comp,'P').set(self.__opf[self.__opf['name'] == comp]['active power (MW)']*simulator.mw_w)
-                        self.sim.get_idobj_attr(comp,'Q').set(self.__opf[self.__opf['name'] == comp]['reactive power (MVAR)']*simulator.mw_w)
+                        self.sim.get_idobj_attr(comp,'P').set(self.__opf[self.__opf['name'] == comp]['active power (MW)']*simulator.mw_w*f)
+                        self.sim.get_idobj_attr(comp,'Q').set(self.__opf[self.__opf['name'] == comp]['reactive power (MVAR)']*simulator.mw_w*f)
                         self.log.debug(f'Found opf value for {comp}')
                     except Exception:
                         pass
@@ -313,7 +322,6 @@ class simulator(base_sim):
                         columns_to_extract.append(profile_name)
                         self.log.debug(f"Profile component '{profile_name}' assigned to simulation component '{sim_name}{suffix}'")
             else:
-                pass
                 self.log.debug(f"No profile component found for simulation component '{sim_name}'")
                 
         return profiles[columns_to_extract].rename(columns=rmap, inplace=False)
