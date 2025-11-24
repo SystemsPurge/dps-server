@@ -128,7 +128,7 @@ class fdb:
         elif fdb.__ext(fname,'.csv'):
             return {fname.strip('.csv'):read_csv(path)}
         else:
-            return read_excel(path,sheet_name=None,header=2)
+            return read_excel(path,sheet_name=None)
     
     def __unzip(self,archive:str,fpath:str)->None:
         xmlpath = self.__path(fdb.__xmls,archive.removesuffix('.zip')) 
