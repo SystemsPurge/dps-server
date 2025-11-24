@@ -8,25 +8,25 @@
 - `DPS_LOG_LEVEL` : all the log levels supported by the python logging module
 - `DPS_DEFAULTS` : path to default simulation parameters when using cli
 
-defaults file must be a json file with all the default simulation parameter values,<br>
-that would not be explicitely passed to a cli command. Passed arguments will overwrite<br>
+defaults file must be a json file with all the default simulation parameter values,
+that would not be explicitely passed to a cli command. Passed arguments will overwrite
 defaults.<br>
 # Usage
 ## Docker
-Run docker image `registry.git.rwth-aachen.de/acs/public/dpsv:alpha0.1.0`:<br>
-`docker run -p 5000:5000 registry.git.rwth-aachen.de/acs/public/dpsv:alpha0.1.0`<br>
+Run docker image `registry.git.rwth-aachen.de/acs/public/dpsv:alpha0.1.0`:
+`docker run -p 5000:5000 registry.git.rwth-aachen.de/acs/public/dpsv:alpha0.1.0`
 Then send your requests to localhost:5000.<br>
 Optionally mount a db folder instead of using http, then use the container cli,
 container mount path has to correspond to the DPS_ROOT variable.<br>
 `docker run --name dpsv -v $(pwd)/db:/dpsroot registry.git.rwth-aachen.de/acs/public/dpsv:alpha0.1.0`.<br>
-You can then put your needed files (xml,profiles) directly in the corresponding db subfolder,and use the cli:<br>
-`docker exec dpsv sh -c 'dps run -ux <xml> -up <profile>...etc'`<br>
+You can then put your needed files (xml,profiles) directly in the corresponding db subfolder,and use the cli:
+`docker exec dpsv sh -c 'dps run -ux <xml> -up <profile>...etc'`
 In this manner, results are retrieved from `<db folder>/result/<sim name>`.<br>
 
 ## Helm
-To install chart locally on a kubernetes cluster, run <br>
-`helm install dpsv ./helm-dpsv --namespace dpsv --create-namespace`<br>
-From the root folder. Change persist to true in values, to persist the timeseries/results database <br>
+To install chart locally on a kubernetes cluster, run 
+`helm install dpsv ./helm-dpsv --namespace dpsv --create-namespace`
+From the root folder. Change persist to true in values, to persist the timeseries/results database 
 Server has no authentication, hiding it behind a proxy+ IDP is a good idea.<br>
 
 ## Open API spec
