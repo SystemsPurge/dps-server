@@ -123,7 +123,7 @@ class simulator(base_sim):
 
         #STRIP SPACES
         df.columns = [col.strip() for col in df.columns]
-        
+        print(df.columns)
         #DF->BYTES
         output_buffer = io.StringIO()
         df.to_csv(output_buffer, index=False)
