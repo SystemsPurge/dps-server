@@ -7,7 +7,6 @@ import re
 import zipfile
 
 
-#TODO: RESOURCE CLASS : (EXTENSION VALIDATION, PROCESSING SPECIALIZATION...ETC)
 class fdb:
     class __score:
         name:str

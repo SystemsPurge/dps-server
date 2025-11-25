@@ -3,13 +3,74 @@ import json
 from typing import Optional, Any,List,Dict
 from delegate import delegate,client_delegate as cd, local_delegate as ld
 from logging import Logger,basicConfig,_nameToLevel,getLogger
-from pydantic import RootModel,BaseModel
-class JTS(RootModel[Dict[str, List[float]]]):
-    pass
+from pydantic import RootModel,BaseModel,Field,model_validator,ValidationError
+from functools import reduce
+class JTS(BaseModel):
+    time: List[float|str] = Field(
+        ..., 
+        description="**Required.** A list of time values (e.g., timestamps or integer time steps)."
+    )
+    
+    model_config = {
+        "extra": "allow",
+        "json_schema_extra": {
+            "example": {
+                "time": [0.0, 0.5, 1.0, 1.5, 2.0],
+                "sensor_x": [10.1, 10.2, 10.3, 10.4, 10.5],
+                "sensor_y": [5.1, 5.2, 5.3, 5.4, 5.5],
+                "temperature": [25.0, 25.1, 25.2, 25.1, 25.0]
+            }
+        }
+    }
+    
+    @model_validator(mode='before')
+    @classmethod
+    def check_all_fields_are_list_of_float(cls, data: Dict[str, Any]) -> Dict[str, Any]:
+        #is json
+        if not isinstance(data, dict):
+            raise ValueError(f"Object must be a dict.")
+        #is list
+        for key, value in data.items():
+            if not isinstance(value, list):
+                raise ValueError(f"Field '{key}' must be a list.")
+            if key == "time":
+                continue
+            #is float
+            if not reduce(lambda x,y: x and (isinstance(y,float) or isinstance(y,int)),value,True):
+                raise ValueError(f"Field '{key}' must be a list of float")
+        return data
+
+class TableRow(BaseModel):
+    timestamp: float|str = Field(
+        description="Timestamp of given measurement"
+    )
+    
+    value: float = Field(
+        description="Measured value"
+    )
+    
+    profile_type: str = Field(
+        description="What the measured value represents (e.g active power)"
+    )
+    
+    model_config = {
+        "extra": "allow",
+        "json_schema_extra": {
+            "example": {
+                "bus":"Some Bus Name"
+            }
+        }
+    }
 
 class JTSPost(BaseModel):
-    pivot: bool
-    data: JTS
+    pivot: bool = Field(
+        ...,
+        description=(
+            "Set to true to pivot data given as a list of JSON elements."
+            "Fields beside timestamp and value will be appended to the component's name."
+        )
+    )
+    data: JTS|List[TableRow]
 class LstRes(BaseModel):
     lst:List[str]
 
