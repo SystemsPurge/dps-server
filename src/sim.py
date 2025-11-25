@@ -178,10 +178,10 @@ class simulator(base_sim):
                     if f < 0:
                         self.log.info(f"Found genstat: {comp}")
                     if f'{comp}_p' in self.__profile_names:
-                        self.sim.get_idobj_attr(comp,'P').set(profiles[profiles['DD/MM/YYYY HH:MM'] == ts][f'{comp}_p'].values[0]*simulator.mw_w*f)
+                        self.sim.get_idobj_attr(comp,'P').set(profiles[profiles['timestamp'] == ts][f'{comp}_p'].values[0]*simulator.mw_w*f)
                         self.log.debug(f'Found P value for {comp} at {ts}')
                     if f'{comp}_q' in self.__profile_names:
-                        self.sim.get_idobj_attr(comp,'Q').set(profiles[profiles['DD/MM/YYYY HH:MM'] == ts][f'{comp}_q'].values[0]*simulator.mw_w*f)
+                        self.sim.get_idobj_attr(comp,'Q').set(profiles[profiles['timestamp'] == ts][f'{comp}_q'].values[0]*simulator.mw_w*f)
                         self.log.debug(f'Found Q value for {comp} at {ts}')
                 except:
                     pass
@@ -266,7 +266,7 @@ class simulator(base_sim):
         dfs = list(sheets.values())
         self.log.info(dfs)
         # Extract the datetime column from the first sheet (assuming the datetime column is the same across all sheets)
-        time_col = dfs[0]['DD/MM/YYYY HH:MM']
+        time_col = dfs[0]['timestamp']
         self.__time = time_col.dropna(how='all').values
         # Find common columns names (component name)
         def interset(pset:set[str],cdf:DataFrame):
@@ -274,11 +274,11 @@ class simulator(base_sim):
                 return pset
             return pset & set(cdf.columns.values)
         common_cols = reduce(interset,dfs,set(dfs[0].columns))
-        common_cols.discard('DD/MM/YYYY HH:MM') # discard datetime column
+        common_cols.discard('timestamp') # discard datetime column
         common_cols= [s for s in common_cols if 'Unnamed' not in s] # Remove column with 'Unnamed'
 
         profiles_dict= {
-            'DD/MM/YYYY HH:MM':time_col
+            'timestamp':time_col
         }
         
         for col in common_cols:
@@ -307,7 +307,7 @@ class simulator(base_sim):
 
         # old:new
         rmap={}
-        columns_to_extract=['DD/MM/YYYY HH:MM']
+        columns_to_extract=['timestamp']
         # Iterate over simulation component names and check if they exist as a substring in profiles_comp_names
         for sim_name in sim_names:
             start_substring= modify_string(sim_name, self.replace_map)

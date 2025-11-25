@@ -30,6 +30,7 @@ class fdb:
         'profile':'profiles',
         'result':'results',
     }
+    
     l:Logger
     __xmls:str = 'xmls'
     __archives:str= 'archives'
