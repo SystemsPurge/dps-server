@@ -71,6 +71,9 @@ class JTSPost(BaseModel):
         )
     )
     data: JTS|List[TableRow]
+    
+class JTSGet(BaseModel):
+    result: JTS
 class LstRes(BaseModel):
     lst:List[str]
 

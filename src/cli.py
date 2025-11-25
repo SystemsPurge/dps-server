@@ -134,7 +134,6 @@ class cli(interface):
             p = p.removeprefix('./')
         if not p.startswith('/'):    
             p = os.path.join(os.getcwd(),p)
-        print(p)
         exp = r'^(\/|((\/[\w. -_]+)+))$'
         if re.fullmatch(exp,p) is not None:
             return p

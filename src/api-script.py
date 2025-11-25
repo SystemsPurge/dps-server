@@ -1,7 +1,7 @@
 from fastapi import FastAPI,UploadFile,HTTPException,File,Path
 from fastapi.responses import PlainTextResponse
 from fdb import fdb
-from models import interface,_params,JTS,LstRes,JTSPost,UpFileRes
+from models import interface,_params,JTSGet,LstRes,JTSPost,UpFileRes
 import traceback
 import json
 from typing import Any
@@ -100,7 +100,7 @@ async def get_jts(
     tsname:str=Path(
     description="Name of time series to fetch"    
     )
-    )->JTS:
+    )->JTSGet:
     """
     Get a time series as json.
     """

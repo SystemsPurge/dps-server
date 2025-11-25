@@ -245,7 +245,6 @@ class simulator(base_sim):
             
         self.__opf = base[['p_mw','q_mvar','name']]
         self.__opf.rename({'p_mw':'active power (MW)','q_mvar':'reactive power (MVAR)'},inplace=True,axis=1)
-        self.log.info(self.__opf)
         self.__opf_names = set(self.__opf['name'].values)
     
     def __assign_pq(self,timestamp:str)->None:
