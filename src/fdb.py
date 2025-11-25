@@ -62,7 +62,7 @@ class fdb:
         self.__check(tstype)
         with open(self.__path(fdb.__ts[tstype],tsname),'bw') as f:
             f.write(content)
-        df = self.tsget(tstype,tsname) #retrieve as df
+        df = self.tsget(tstype,tsname.split('.')[0]) #retrieve as df
         for c in df.columns:
             df.rename({c:c.strip()},inplace=True,axis=1)
         self.tsput(tstype,tsname,df)
