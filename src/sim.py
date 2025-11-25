@@ -1,6 +1,7 @@
 from functools import reduce
 from typing import Optional,Any,Callable
 import dpsim
+import io
 from logging import Logger,getLogger
 import pandas as pd
 from pandas import DataFrame
@@ -112,10 +113,23 @@ class simulator(base_sim):
         self.log.info('Starting simulation loop')
         self.__loop()
     
+    #gotta do these shennanigans because DPSIM is corrupting result keys
     def __stop(self):
-        with open(f'logs/{self.name}.csv','br') as f:
-            simulator._fdb.tsaddraw('result',self.name+'.csv',f.read())
+        #BYTES->DF
+        raw_bytes: bytes
+        with open(f'logs/{self.name}.csv', 'br') as f:
+            raw_bytes = f.read()
+        df = pd.read_csv(io.StringIO(raw_bytes.decode('utf-8')))
+
+        #STRIP SPACES
+        df.columns = [col.strip() for col in df.columns]
+        
+        #DF->BYTES
+        output_buffer = io.StringIO()
+        df.to_csv(output_buffer, index=False)
+        simulator._fdb.tsaddraw('result', self.name + '.csv', output_buffer.getvalue().encode('utf-8'))
         rmtree('logs')
+        
         
     def configure(self) -> None:
         self.log.info('Configuring')
