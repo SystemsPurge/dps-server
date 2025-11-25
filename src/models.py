@@ -77,7 +77,7 @@ class JTSPost(BaseModel):
         "model_show_config":False
     }
     
-class JTSGet(RootModel[Dict[str,Dict[str,List[float]]]]):
+class JTSGet(RootModel[Dict[str,Dict[str,List[float]]|Dict[str,Dict[str,List[float]]]]|Any]):
     pass
 class LstRes(BaseModel):
     lst:List[str]
