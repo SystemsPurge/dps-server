@@ -12,6 +12,7 @@ class JTS(BaseModel):
     )
     
     model_config = {
+        "model_show_config":False,
         "extra": "allow",
         "json_schema_extra": {
             "example": {
@@ -55,6 +56,7 @@ class TableRow(BaseModel):
     
     model_config = {
         "extra": "allow",
+        "model_show_config":False,
         "json_schema_extra": {
             "example": {
                 "bus":"Some Bus Name"
@@ -71,14 +73,26 @@ class JTSPost(BaseModel):
         )
     )
     data: JTS|List[TableRow]
+    model_config = {
+        "model_show_config":False
+    }
     
 class JTSGet(BaseModel):
     result: JTS
+    model_config = {
+        "model_show_config":False
+    }
 class LstRes(BaseModel):
     lst:List[str]
+    model_config = {
+        "model_show_config":False
+    }
 
 class UpFileRes(BaseModel):
     filename: str
+    model_config = {
+        "model_show_config":False
+    }
 
 class params:
     name: str = os.urandom(6).hex()
@@ -105,6 +119,9 @@ class _params(BaseModel):
     use_xml:str = None
     domain:str
     solver:str
+    model_config = {
+        "model_show_config":False
+    }
 
 class interface:
     _d:delegate
