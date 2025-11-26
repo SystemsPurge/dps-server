@@ -5,7 +5,7 @@ from delegate import delegate,client_delegate as cd, local_delegate as ld
 from logging import Logger,basicConfig,_nameToLevel,getLogger
 from pydantic import RootModel,BaseModel,Field,model_validator,ValidationError
 from functools import reduce
-class JTS(BaseModel):
+class JsonTimeseries(BaseModel):
     time: List[float|str] = Field(
         ..., 
         description="**Required.** A list of time values (e.g., timestamps or integer time steps)."
@@ -41,6 +41,10 @@ class JTS(BaseModel):
                 raise ValueError(f"Field '{key}' must be a list of float")
         return data
 
+class JsonTimeseriesDataframe(RootModel[Dict[str,JsonTimeseries]]):
+    pass
+    
+
 class TableRow(BaseModel):
     timestamp: float|str = Field(
         description="Timestamp of given measurement"
@@ -64,7 +68,10 @@ class TableRow(BaseModel):
         }
     }
 
-class JTSPost(BaseModel):
+class Table(RootModel[List[TableRow]]):
+    pass
+
+class JsonTimeseriesDataframeOrTable(BaseModel):
     pivot: bool = Field(
         ...,
         description=(
@@ -72,20 +79,20 @@ class JTSPost(BaseModel):
             "Fields beside timestamp and value will be appended to the component's name."
         )
     )
-    data: JTS|List[TableRow]
+    data: JsonTimeseries|Table
     model_config = {
         "model_show_config":False
     }
     
-class JTSGet(RootModel[Dict[str,Dict[str,List[float]]|Dict[str,Dict[str,List[float]]]]|Any]):
+class JsonTimeseriesOrJsonTimeseriesDataframe(RootModel[Dict[str,Dict[str,List[float]]|Dict[str,Dict[str,List[float]]]]|Any]):
     pass
-class LstRes(BaseModel):
+class ListResult(BaseModel):
     lst:List[str]
     model_config = {
         "model_show_config":False
     }
 
-class UpFileRes(BaseModel):
+class UploadFileResult(BaseModel):
     filename: str
     model_config = {
         "model_show_config":False
@@ -105,7 +112,7 @@ class params:
     def __init__(self):
         pass
     
-class _params(BaseModel):
+class SimParameters(BaseModel):
     name: str = os.urandom(6).hex()
     freq: int
     duration: int

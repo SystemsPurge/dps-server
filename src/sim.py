@@ -207,8 +207,8 @@ class simulator(base_sim):
                 if comp in self.__opf_names:
                     f = -1 if 'genstat' in comp else 1
                     try:
-                        self.sim.get_idobj_attr(comp,'P').set(self.__opf[self.__opf['name'] == comp]['active power (MW)']*simulator.mw_w*f)
-                        self.sim.get_idobj_attr(comp,'Q').set(self.__opf[self.__opf['name'] == comp]['reactive power (MVAR)']*simulator.mw_w*f)
+                        self.sim.get_idobj_attr(comp,'P').set(self.__opf[self.__opf['name'] == comp]['active']*simulator.mw_w*f)
+                        self.sim.get_idobj_attr(comp,'Q').set(self.__opf[self.__opf['name'] == comp]['reactive']*simulator.mw_w*f)
                         self.log.debug(f'Found opf value for {comp}')
                     except Exception:
                         pass
@@ -258,7 +258,7 @@ class simulator(base_sim):
             base = pd.concat([pd.concat([net[k]['name'], net[f'res_{k}']], axis=1),base])
             
         self.__opf = base[['p_mw','q_mvar','name']]
-        self.__opf.rename({'p_mw':'active power (MW)','q_mvar':'reactive power (MVAR)'},inplace=True,axis=1)
+        self.__opf.rename({'p_mw':'active','q_mvar':'reactive'},inplace=True,axis=1)
         self.__opf_names = set(self.__opf['name'].values)
     
     def __assign_pq(self,timestamp:str)->None:
@@ -296,9 +296,9 @@ class simulator(base_sim):
         
         for col in common_cols:
             for sheet_name, df in sheets.items():
-                if fdb.search_str(fdb.to_words(sheet_name),fdb.to_words('active power')) == 2:
+                if fdb.search_str(fdb.to_words(sheet_name),fdb.to_words('active')) == 1:
                     profiles_dict[f'{col}_p'] = df[col]  # Add the active power profile data and extend column name with _p
-                elif fdb.search_str(fdb.to_words(sheet_name),fdb.to_words('reactive power')) == 2:
+                elif fdb.search_str(fdb.to_words(sheet_name),fdb.to_words('reactive')) == 1:
                     profiles_dict[f'{col}_q'] = df[col]  # Add the reactive power profile data and extend column name with _q
 
         return self.__assign_comps(pd.DataFrame.from_dict(profiles_dict).dropna(how='all'))

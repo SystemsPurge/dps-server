@@ -1,7 +1,13 @@
 from fastapi import FastAPI,UploadFile,HTTPException,File,Path
-from fastapi.responses import PlainTextResponse
 from fdb import fdb
-from models import interface,_params,JTSGet,LstRes,JTSPost,UpFileRes
+from models import (
+    interface,
+    SimParameters,
+    JsonTimeseriesOrJsonTimeseriesDataframe,
+    ListResult,
+    JsonTimeseriesDataframeOrTable,
+    UploadFileResult
+)
 import traceback
 import json
 from typing import Any
@@ -19,10 +25,17 @@ def pivot_table(data: list[dict[str,Any]]):
         }
     }
     for d in data:
-        pt = d.get("power_type")
-        if d["profile_type"]+'_'+d["bus"] not in result[pt]:
-            result[pt][d["profile_type"]+'_'+d["bus"]] = []
-        result[pt][d["profile_type"]+'_'+d["bus"]].append(d["value"])
+        pt:str = d.get("power_type") #TODO: CHANGE THIS TO CHECK AS SUBSTRING
+        try:
+            keyarr = [k for k in result.keys() if k in pt]
+            if len(keyarr) != 1:
+                raise f'Cannot parse power_type into active or reactive'
+            key = keyarr[0]
+            if d["profile_type"]+'_'+d["bus"] not in result[key]:
+                result[pt][d["profile_type"]+'_'+d["bus"]] = []
+            result[pt][d["profile_type"]+'_'+d["bus"]].append(d["value"])
+        except Exception as e:
+            raise f'Failed to pivot: {e}'
     return result
 
 i = interface('API')
@@ -36,7 +49,7 @@ async def post_ts(
     ),
     file:UploadFile= File(
     description="An excel/csv spreadsheet"
-))->UpFileRes:
+))->UploadFileResult:
     """
     Upload a time series file of a certain resource.
     """
@@ -53,7 +66,7 @@ async def post_ts(
 @app.get("/ts/{tstype}")
 async def list_ts(tstype:str=Path(
     description="The type of the time series being fetched, one of profile or result"    
-    ))->LstRes:
+    ))->ListResult:
     """
     List time series files of a certain resource.
     """
@@ -68,13 +81,13 @@ async def list_ts(tstype:str=Path(
 #Upload a time series json.
 @app.post("/jts/{tstype}/{tsname}")
 async def post_jts(
-    body:JTSPost,
+    body:JsonTimeseriesDataframeOrTable,
     tstype:str=Path(
     description="The type of the time series being uploaded, one of profile or result"    
     ),
     tsname:str=Path(
     description="The name of the time series being uploaded."    
-    ))->UpFileRes:
+    ))->UploadFileResult:
     """
     Upload a time series json.
     """
@@ -100,7 +113,7 @@ async def get_jts(
     tsname:str=Path(
     description="Name of time series to fetch"    
     )
-    )->JTSGet:
+    )->JsonTimeseriesOrJsonTimeseriesDataframe:
     """
     Get a time series as json.
     """
@@ -120,7 +133,7 @@ async def delete_ts(
     tsname:str=Path(
     description="Name of the time series to delete"    
     )
-)->UpFileRes:
+)->UploadFileResult:
     """
     Delete a timseries from the file database.
     """
@@ -135,7 +148,7 @@ async def delete_ts(
 @app.post("/xml")
 async def post_xml(file:UploadFile=File(
     description="zip archive containing CIM xml profiles"
-))->UpFileRes:
+))->UploadFileResult:
     """
     Post CIM data archive.
     """
@@ -150,7 +163,7 @@ async def post_xml(file:UploadFile=File(
 
 #List all CIM archive names.
 @app.get("/xml")
-async def list_xml()->LstRes:
+async def list_xml()->ListResult:
     """
     List all CIM archive names.
     """
@@ -165,7 +178,7 @@ async def list_xml()->LstRes:
 @app.delete("/xml/{xmlname}")
 async def delete_xml(xmlname:str=Path(
     description="Name of the archive to delete"    
-    ))->UpFileRes:
+    ))->UploadFileResult:
     """
     Delete a system's CIM archive.
     """
@@ -179,7 +192,7 @@ async def delete_xml(xmlname:str=Path(
 
 #Run a simulation.
 @app.post("/s")
-async def run_sim(p:_params)->UpFileRes:
+async def run_sim(p:SimParameters)->UploadFileResult:
     """
     Run a simulation.
     """
