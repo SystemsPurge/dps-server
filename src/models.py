@@ -3,12 +3,12 @@ import json
 from typing import Optional, Any,List,Dict
 from delegate import delegate,client_delegate as cd, local_delegate as ld
 from logging import Logger,basicConfig,_nameToLevel,getLogger
-from pydantic import RootModel,BaseModel,Field,model_validator,ValidationError
+from pydantic import BaseModel,Field,model_validator
 from functools import reduce
 class JsonTimeseries(BaseModel):
-    time: List[float|str] = Field(
+    time: List[int] = Field(
         ..., 
-        description="**Required.** A list of time values (e.g., timestamps or integer time steps)."
+        description="**Required.** A list of time values, one of integer timesteps or unix timestamps."
     )
     
     model_config = {
@@ -31,23 +31,26 @@ class JsonTimeseries(BaseModel):
         if not isinstance(data, dict):
             raise ValueError(f"Object must be a dict.")
         #is list
+        l = len(data['time'])
         for key, value in data.items():
             if not isinstance(value, list):
                 raise ValueError(f"Field '{key}' must be a list.")
             if key == "time":
                 continue
             #is float
-            if not reduce(lambda x,y: x and (isinstance(y,float) or isinstance(y,int)),value,True):
+            if not reduce(lambda x,y: x and isinstance(y,float|int),value,True):
                 raise ValueError(f"Field '{key}' must be a list of float")
+            if len(value) < l:
+                raise ValueError(f"All array field must have the same length as the time field")
         return data
 
-class JsonTimeseriesDataframe(RootModel[Dict[str,JsonTimeseries]]):
-    pass
+class JsonTimeseriesResult(BaseModel):
+    result:JsonTimeseries
     
 
 class TableRow(BaseModel):
-    timestamp: float|str = Field(
-        description="Timestamp of given measurement"
+    ts: int = Field(
+        description="Timestamp of given measurement in unix timestamp format"
     )
     
     value: float = Field(
@@ -56,6 +59,10 @@ class TableRow(BaseModel):
     
     profile_type: str = Field(
         description="What the measured value represents (e.g active power)"
+    )
+    
+    power_type: str = Field(
+        description="Active or reactive, not strict, can contain active or reactive as substring"
     )
     
     model_config = {
@@ -68,24 +75,6 @@ class TableRow(BaseModel):
         }
     }
 
-class Table(RootModel[List[TableRow]]):
-    pass
-
-class JsonTimeseriesDataframeOrTable(BaseModel):
-    pivot: bool = Field(
-        ...,
-        description=(
-            "Set to true to pivot data given as a list of JSON elements."
-            "Fields beside timestamp and value will be appended to the component's name."
-        )
-    )
-    data: JsonTimeseries|Table
-    model_config = {
-        "model_show_config":False
-    }
-    
-class JsonTimeseriesOrJsonTimeseriesDataframe(RootModel[Dict[str,Dict[str,List[float]]|Dict[str,Dict[str,List[float]]]]|Any]):
-    pass
 class ListResult(BaseModel):
     lst:List[str]
     model_config = {

@@ -1,5 +1,6 @@
 from pandas import DataFrame,read_excel,read_json,read_csv
 import os 
+import json
 from shutil import rmtree
 from logging import Logger,getLogger
 from fastapi import UploadFile
@@ -124,7 +125,11 @@ class fdb:
     @staticmethod
     def __get(path:str,fname:str)->dict[str,DataFrame]:
         if fdb.__ext(fname,'.json'):
-            return {fname.strip('.json'):read_json(path)}
+            with open(path,'rb') as f:
+                j = json.loads(f.read().decode('utf-8'))
+                return {
+                    sheet:DataFrame(data) for sheet,data in j.items()
+                }
         elif fdb.__ext(fname,'.csv'):
             return {fname.strip('.csv'):read_csv(path)}
         else:

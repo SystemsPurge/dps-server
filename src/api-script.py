@@ -3,72 +3,138 @@ from fdb import fdb
 from models import (
     interface,
     SimParameters,
-    JsonTimeseriesOrJsonTimeseriesDataframe,
+    JsonTimeseriesResult,
     ListResult,
-    JsonTimeseriesDataframeOrTable,
+    TableRow,
     UploadFileResult
 )
 import traceback
 import json
-from typing import Any
+from typing import Any,List
 
 
-def pivot_table(data: list[dict[str,Any]]):
-    time:list[int] = list(map(lambda x: x["timestamp"],data))
+def pivot_table(data: List[TableRow]):
+    #to dicts
+    dict_data = [d.model_dump() for d in data]
+    #uniaue values and sort
+    time:list[int] = list(set(map(lambda x: x["ts"],dict_data)))
     time.sort()
+
+    base_keys = ["power_type","profile_type","value","ts"]
     result = {
         "active":{
-            "time":time
+            "timestamp":time
         },
         "reactive":{
-            "time":time
+            "timestamp":time
         }
     }
-    for d in data:
-        pt:str = d.get("power_type") #TODO: CHANGE THIS TO CHECK AS SUBSTRING
+    for d in dict_data:
         try:
-            keyarr = [k for k in result.keys() if k in pt]
-            if len(keyarr) != 1:
-                raise f'Cannot parse power_type into active or reactive'
-            key = keyarr[0]
-            if d["profile_type"]+'_'+d["bus"] not in result[key]:
-                result[pt][d["profile_type"]+'_'+d["bus"]] = []
-            result[pt][d["profile_type"]+'_'+d["bus"]].append(d["value"])
+            #Extract profile_type value from data
+            power_type:str = d.get("power_type")
+            base_name:str = d.get("profile_type")
+            ts_idx:int = time.index(d.get("ts"))
+            #complement base name with all extra keys
+            extra_keys:list[str] = [
+                v for k,v in d.items() if k not in base_keys and isinstance(v,str)
+            ]
+            name = f'{base_name}_{'_'.join(extra_keys)}'
+            #Check overlap of power_type and result keys (active, reactive)
+            keyarr = [k for k in result.keys() if k in power_type.lower()]
+            if len(keyarr) < 1:
+                raise Exception(f'Cannot parse power_type into active or reactive')
+            #len == 2 => power_type == reactive, since active in reactive and reactive in reactive
+            key = 'reactive' if len(keyarr) == 2 else 'active'
+            #if no key, prepare values
+            if name not in result[key]:
+                result[key][name] = [None]*len(time)
+            
+            result[key][name][ts_idx] = d.get("value")
         except Exception as e:
-            raise f'Failed to pivot: {e}'
+            raise Exception(f'Failed to pivot: {e}')
     return result
 
 i = interface('API')
 app = FastAPI()
     
-#Upload a time series file of a certain resource.
-@app.post("/ts/{tstype}")
+#Upload a profile time series json.
+@app.post("/jts/profile/{tsname}")
+async def post_jts(
+    body:List[TableRow],
+    tsname:str=Path(
+    description="The name of the time series being uploaded."    
+    ))->UploadFileResult:
+    """
+    Upload a profile time series json.
+    """
+    i.l.info(f'Got request to post resource {"profile"} from body')
+    try:
+        data = pivot_table(body)
+        tsname += '.json'
+        i._d._tsaddraw("profile",tsname,json.dumps(data).encode('utf-8'))
+    except Exception as rle:
+        raise HTTPException(status_code=400,detail=f'Error adding json {tsname} of {"profile"}: {rle}')
+    return {'filename':tsname}
+    
+#Get a result time series as json.
+@app.get("/jts/result/{tsname}")
+async def get_jts(
+    tsname:str=Path(
+    description="Name of time series to fetch"    
+    )
+    )->JsonTimeseriesResult:
+    """
+    Get a result time series as json.
+    """
+    i.l.info(f'Got request to get resource {tsname} of {"result"} as json')
+    try:
+        res = i._d._jtsget("result",tsname)
+        res = res.get(tsname)
+        res = {k:list(v.values()) for k,v in res.items()}
+        res = {k:v for k,v in res.items() if not any([isinstance(_v,str) for _v in v])}
+        return {'result':res}
+    except Exception as rle:
+        raise HTTPException(status_code=400,detail=f'Error getting json {tsname} of {"result"}: {rle}')
+
+#Run a simulation.
+@app.post("/s")
+async def run_sim(p:SimParameters)->UploadFileResult:
+    """
+    Run a simulation.
+    """
+    i.l.info(f'Got request to run simulation with parameters {p.model_dump()}')
+    try:
+        i._d._run(p.model_dump())
+    except Exception:
+        raise HTTPException(status_code=400,detail=f'Error running simulation: {traceback.format_exc()}')
+    return {'filename':p.name}
+
+#Upload a profile time series file.
+@app.post("/ts/profile",deprecated=True)
 async def post_ts(
-    tstype:str= Path(
-    description="The type of the time series being uploaded, one of profile or result"    
-    ),
     file:UploadFile= File(
     description="An excel/csv spreadsheet"
 ))->UploadFileResult:
     """
-    Upload a time series file of a certain resource.
+    Upload a profile time series file.
     """
     i.l.info(f'Got request to add file {file.filename}')
     if not fdb.isallowed(file.filename):
         raise HTTPException(status_code=400,detail=f'File type of {file.filename} is not allowed')
     try:
-        i._d._tsaddraw(tstype,file.filename,file.file.read())
+        i._d._tsaddraw("profile",file.filename,file.file.read())
     except Exception as rre:
         raise HTTPException(status_code=400,detail=f'Error writing file: {rre}')
     return {'filename':file.filename}
 
-#List time series files of a certain resource.
+#List time series data of a certain resource.
 @app.get("/ts/{tstype}")
 async def list_ts(tstype:str=Path(
     description="The type of the time series being fetched, one of profile or result"    
     ))->ListResult:
     """
-    List time series files of a certain resource.
+    List time series data of a certain resource.
     """
     i.l.info(f'Got request to list resource {tstype}')
     try:
@@ -76,56 +142,8 @@ async def list_ts(tstype:str=Path(
     except Exception as rle:
         raise HTTPException(status_code=400,detail=f'Error listing {tstype}: {rle}')
 
-
-
-#Upload a time series json.
-@app.post("/jts/{tstype}/{tsname}")
-async def post_jts(
-    body:JsonTimeseriesDataframeOrTable,
-    tstype:str=Path(
-    description="The type of the time series being uploaded, one of profile or result"    
-    ),
-    tsname:str=Path(
-    description="The name of the time series being uploaded."    
-    ))->UploadFileResult:
-    """
-    Upload a time series json.
-    """
-    i.l.info(f'Got request to post resource {tstype} from body')
-    try:
-        content = json.dumps(body).encode('utf-8')
-        if "pivot" in content:
-            data = pivot_table(content["data"])
-        else:
-            data = content["data"]
-        tsname += '.json'
-        i._d._tsaddraw(tstype,tsname,data)
-    except Exception as rle:
-        raise HTTPException(status_code=400,detail=f'Error adding json {tsname} of {tstype}: {rle}')
-    return {'filename':tsname}
-    
-#Get a time series as json.
-@app.get("/jts/{tstype}/{tsname}")
-async def get_jts(
-    tstype:str=Path(
-    description="The type of the time series to fetch, one of profile or result"    
-    ),
-    tsname:str=Path(
-    description="Name of time series to fetch"    
-    )
-    )->JsonTimeseriesOrJsonTimeseriesDataframe:
-    """
-    Get a time series as json.
-    """
-    i.l.info(f'Got request to get resource {tsname} of {tstype} as json')
-    try:
-        return i._d._jtsget(tstype,tsname)
-    except Exception as rle:
-        raise HTTPException(status_code=400,detail=f'Error getting json {tsname} of {tstype}: {rle}')
-
-
 #Delete a timseries from the file database.
-@app.delete("/ts/{tstype}/{tsname}")
+@app.delete("/ts/{tstype}/{tsname}",deprecated=True)
 async def delete_ts(
     tstype:str=Path(
     description="The type of the time series being deleted, one of profile or result"    
@@ -188,17 +206,3 @@ async def delete_xml(xmlname:str=Path(
     except Exception as rde:
         raise HTTPException(status_code=400,detail=f'Error deleting xml {xmlname}: {rde}')
     return {'filename':xmlname}
-    
-
-#Run a simulation.
-@app.post("/s")
-async def run_sim(p:SimParameters)->UploadFileResult:
-    """
-    Run a simulation.
-    """
-    i.l.info(f'Got request to run simulation with parameters {p.model_dump()}')
-    try:
-        i._d._run(p.model_dump())
-    except Exception:
-        raise HTTPException(status_code=400,detail=f'Error running simulation: {traceback.format_exc()}')
-    return {'filename':p.name}

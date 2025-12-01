@@ -192,13 +192,22 @@ class simulator(base_sim):
                     if f < 0:
                         self.log.info(f"Found genstat: {comp}")
                     if f'{comp}_p' in self.__profile_names:
-                        self.sim.get_idobj_attr(comp,'P').set(profiles[profiles['timestamp'] == ts][f'{comp}_p'].values[0]*simulator.mw_w*f)
-                        self.log.debug(f'Found P value for {comp} at {ts}')
+                        value_p = profiles[profiles['timestamp'] == ts][f'{comp}_p'].values[0]
+                        if pd.notna(value_p):
+                            self.sim.get_idobj_attr(comp,'P').set(profiles[profiles['timestamp'] == ts][f'{comp}_p'].values[0]*simulator.mw_w*f)
+                            self.log.debug(f'Found P value for {comp} at {ts}')
+                        else:
+                            self.log.debug(f'P value for {comp} at {ts} is None')
                     if f'{comp}_q' in self.__profile_names:
-                        self.sim.get_idobj_attr(comp,'Q').set(profiles[profiles['timestamp'] == ts][f'{comp}_q'].values[0]*simulator.mw_w*f)
-                        self.log.debug(f'Found Q value for {comp} at {ts}')
-                except:
-                    pass
+                        value_q = profiles[profiles['timestamp'] == ts][f'{comp}_q'].values[0]
+                        if pd.notna(value_q):
+                            self.sim.get_idobj_attr(comp,'Q').set(profiles[profiles['timestamp'] == ts][f'{comp}_q'].values[0]*simulator.mw_w*f)
+                            self.log.debug(f'Found Q value for {comp} at {ts}')
+                        else:
+                            self.log.debug(f'Q value for {comp} at {ts} is None')
+                except Exception as e:
+                    self.log.debug(f'Encountered error when assigning profile value: {e}')
+
             funcs.append(getp)
             
         if self.opf:
