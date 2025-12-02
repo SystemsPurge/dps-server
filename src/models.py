@@ -50,18 +50,22 @@ class JsonTimeseriesResult(BaseModel):
 
 class TableRow(BaseModel):
     ts: int = Field(
+        ...,
         description="Timestamp of given measurement in unix timestamp format"
     )
     
     value: float = Field(
+        ...,
         description="Measured value"
     )
     
     profile_type: str = Field(
+        ...,
         description="What the measured value represents (e.g active power)"
     )
     
     power_type: str = Field(
+        ...,
         description="Active or reactive, not strict, can contain active or reactive as substring"
     )
     
@@ -70,21 +74,43 @@ class TableRow(BaseModel):
         "model_show_config":False,
         "json_schema_extra": {
             "example": {
-                "bus":"Some Bus Name"
+                "ts":1764627480,
+                "value":0.1,
+                "power_type":"active",
+                "profile_type":"SOME_LINE_COMPONENT",
+                "bus":"SOME_BUS_NAME ( all extra fields are used as a label )"
             }
         }
     }
 
 class ListResult(BaseModel):
-    lst:List[str]
+    lst:List[str]=Field(
+        description="String list result."
+    )
     model_config = {
-        "model_show_config":False
+        "model_show_config":False,
+        "json_schema_extra": {
+            "example": {
+                "lst":[
+                    "cim-data-1",
+                    "cim-data-2"
+                ]
+            }
+        }
     }
 
 class UploadFileResult(BaseModel):
-    filename: str
+    filename: str=Field(
+        description="Named resource result: filename, simulation name, profile/result name"
+    )
+    
     model_config = {
-        "model_show_config":False
+        "model_show_config":False,
+        "json_schema_extra": {
+            "example": {
+                "filename":"sim-run-1"
+            }
+        }
     }
 
 class params:
@@ -102,18 +128,71 @@ class params:
         pass
     
 class SimParameters(BaseModel):
-    name: str = os.urandom(6).hex()
-    freq: int
-    duration: int
-    timestep: float
-    opf: bool
-    use_profile:Optional[str] = None
-    replace_map:Optional[dict[str,str]] = None
-    use_xml:str = None
-    domain:str
-    solver:str
+    name: str = Field(
+        default=os.urandom(6).hex(),
+        description="Name of the simulation/produced result file"
+    )
+    
+    freq: int= Field(
+        default=50,
+        description="Frequency of power grid"
+    )
+    
+    duration: int= Field(
+        default=300,
+        description="Duration of simulation in timesteps"
+    )
+    
+    timestep: float= Field(
+        default=1,
+        description="Timestep of simulation"
+    )
+    
+    opf: bool= Field(
+        default=False,
+        description="Generate a profile from a pandapower optimal powerflow"
+    )
+    
+    use_profile:Optional[str]= Field(
+        default=None,
+        description="Use uploaded profile data, by keyword"
+    )
+    
+    replace_map:Optional[dict[str,str]] = Field(
+        default=None,
+        description="Replace component name parts to reconcile profiles and simulation"
+    )
+    
+    use_xml:str = Field(
+        default=None,
+        description="CIM data to describe simulated system, by keyword"
+    )
+    
+    domain:str = Field(
+        default='SP',
+        description="Domain of simulation"
+    )
+    solver:str = Field(
+        default='NRP',
+        description="Simulation solver type"
+    )
     model_config = {
-        "model_show_config":False
+        "model_show_config":False,
+        "json_schema_extra": {
+            "example": {
+                "name":"sim-run-1",
+                "freq":50,
+                "duration":300,
+                "timestep":1,
+                "opf":False,
+                "replace_map":{
+                    "sym":"machine"
+                },
+                "use_xml":"cim-data-1",
+                "domain":"SP",
+                "solver":"NRP"
+            }
+        }
     }
 
 class interface:
