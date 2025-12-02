@@ -16,4 +16,4 @@ build_image:
     - docker context create tls-env
     - docker buildx create --name mybuilder --use tls-env
     - echo $CI_REGISTRY_PASSWORD | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
-    - docker buildx build --provenance=false --platform linux/amd64,linux/arm64 --tag $CI_REGISTRY_IMAGE:alpha0.1.0 --push .
+    - docker buildx build --provenance=false --platform linux/amd64,linux/arm64 --tag $CI_REGISTRY_IMAGE:latest --push .
