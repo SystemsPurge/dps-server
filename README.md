@@ -32,40 +32,153 @@ This server mirrors some functionality of dpsim, more can be found in the [docs]
 This server provides [the optimal powerflow implemented by pandapower](https://github.com/e2nIEE/pandapower/blob/develop/tutorials/pandamodels_opf.ipynb).<br>
 
 This functionality is "TODO" and not fully implemented yet.<br>
-## Core CLI commands
+## 🚀 API Reference
 
-1. `run` : Run a simulation
-    #### Flags:
-    - `-n` : Simulation (& result) name
-    - `-f` : System Frequency
-    - `-d` : Duration
-    - `-t` : Timestep
-    - `-opf` : Perform a pandapower optimal powerflow
-    - `-up` : Use Profile data
-    - `-ux` : Use XML files for system
-    - `-dom` : Domain
-    - `-s` : Solver
-1. `tslist <tstype>` : list timeseries of a certain category
-    #### Args:
-    - `<tstype>` : timeseries type
-3. `tsadd <tstype> <tspath>` : add a timeseries
-    #### Args:
-    - `<tstype>` : timeseries type
-    - tspath: path to file
-4. `tsdelete <tstype> <tsname>` : delete a timeseries
-    #### Args:
-    - `<tstype>` : timeseries type
-    - `<tsname>`: keywords in file name
-5. `xlist` : list xml
-6. `xadd <xmlpath>` : add xml (based on the name of the folder/archive they were provided in)
-    #### Args:
-    - `<xmlpath>` : Path to xml (folder if local mode, otherwise an archive)
-7. `xdelete <xmlname>` : delete xml
-    #### Args:
-    - `<xmlname>` : keywords in file name
-8. `jtsget <tstype> <tsname>` : get a timeseries in json
-    #### Args:
-    - `<tstype>` : timeseries type
-    - `<tsname>` : keywords in file name
-    #### Flags:
-    - -o: Optional output file, otherwise prints to stdout
+This document provides a reference for the available endpoints and data models in the system.
+
+---
+
+### ⏳ Time Series Profile (JSON)
+
+These endpoints handle uploading and retrieving time series data in a **JSON** format.
+
+| Method | Path | Summary | Description |
+| :--- | :--- | :--- | :--- |
+| **`POST`** | `/jts/profile/{tsname}` | **Post Jts** | Upload a profile time series JSON. |
+| **`GET`** | `/jts/result/{tsname}` | **Get Jts** | Get a result time series as JSON. |
+
+#### **`POST` /jts/profile/{tsname}**
+* **Description:** Upload a profile time series JSON.
+* **Path Parameter:**
+    * `tsname` (`string`, **required**): The name of the time series being uploaded.
+* **Request Body:** An array of `TableRow` objects (JSON).
+* **Successful Response (200):** `UploadFileResult` (e.g., `{"filename": "sim-run-1"}`)
+
+#### **`GET` /jts/result/{tsname}**
+* **Description:** Get a result time series as JSON.
+* **Path Parameter:**
+    * `tsname` (`string`, **required**): Name of time series to fetch.
+* **Successful Response (200):** `JsonTimeseriesResult`
+
+---
+
+### ⚙️ Simulation Endpoint
+
+This endpoint initiates a simulation run.
+
+| Method | Path | Summary | Description |
+| :--- | :--- | :--- | :--- |
+| **`POST`** | `/s` | **Run Sim** | Run a simulation. |
+
+#### **`POST` /s**
+* **Description:** Run a simulation.
+* **Request Body:** `SimParameters` object (JSON) containing configuration for the simulation.
+* **Successful Response (200):** `UploadFileResult` (e.g., `{"filename": "sim-run-1"}`)
+
+---
+
+### 🗄️ XML (CIM Archive) Endpoints
+
+These endpoints manage the uploading, listing, and deletion of **CIM data archives** (XML/ZIP).
+
+| Method | Path | Summary | Description |
+| :--- | :--- | :--- | :--- |
+| **`GET`** | `/xml` | **List Xml** | List all CIM archive names. |
+| **`POST`** | `/xml` | **Post Xml** | Post CIM data archive (multipart/form-data). |
+| **`DELETE`** | `/xml/{xmlname}` | **Delete Xml** | Delete a system's CIM archive. |
+
+#### **`POST` /xml**
+* **Description:** Post CIM data archive.
+* **Request Body:** `multipart/form-data` with a `file` field (zip archive containing CIM xml profiles).
+* **Successful Response (200):** `UploadFileResult`
+
+#### **`GET` /xml**
+* **Description:** List all CIM archive names.
+* **Successful Response (200):** `ListResult`
+
+#### **`DELETE` /xml/{xmlname}**
+* **Description:** Delete a system's CIM archive.
+* **Path Parameter:**
+    * `xmlname` (`string`, **required**): Name of the archive to delete.
+* **Successful Response (200):** `UploadFileResult`
+
+---
+
+### 📊 Time Series File Endpoints (Legacy/Deprecated)
+
+These endpoints handle time series data as files.
+
+| Method | Path | Summary | Description |
+| :--- | :--- | :--- | :--- |
+| **`POST`** | `/ts/profile` | **Post Ts** | Upload a profile time series file (multipart/form-data). **(Deprecated)** |
+| **`GET`** | `/ts/{tstype}` | **List Ts** | List time series data of a certain resource. |
+| **`DELETE`** | `/ts/{tstype}/{tsname}` | **Delete Ts** | Delete a time series from the file database. **(Deprecated)** |
+
+#### **`GET` /ts/{tstype}**
+* **Description:** List time series data of a certain resource.
+* **Path Parameter:**
+    * `tstype` (`string`, **required**): The type of the time series being fetched, one of **`profile`** or **`result`**.
+* **Successful Response (200):** `ListResult`
+
+---
+
+### 📑 Schema Definitions (Models)
+
+The following models define the structure of data used in the requests and responses.
+
+#### `SimParameters`
+Parameters required to run a simulation.
+
+| Property | Type | Description | Default | Example |
+| :--- | :--- | :--- | :--- | :--- |
+| **`name`** | `string` | Name of the simulation/produced result file. | `a9dd9b425335` | `sim-run-1` |
+| **`freq`** | `integer` | Frequency of power grid. | `50` | `50` |
+| **`duration`** | `integer` | Duration of simulation in timesteps. | `300` | `300` |
+| **`timestep`** | `number` | Timestep of simulation. | `1` | `1` |
+| **`opf`** | `boolean` | Generate a profile from a pandapower optimal powerflow. | `false` | `false` |
+| **`use_profile`** | `string` or `null` | Use uploaded profile data, by keyword. | `null` | |
+| **`replace_map`** | `object` or `null` | Replace component name parts to reconcile profiles and simulation. | `null` | `{"sym": "machine"}` |
+| **`use_xml`** | `string` | CIM data to describe simulated system, by keyword. | | `cim-data-1` |
+| **`domain`** | `string` | Domain of simulation (**SP** for Steady-state Power, etc.). | `SP` | `SP` |
+| **`solver`** | `string` | Simulation solver type. | `NRP` | `NRP` |
+
+#### `TableRow`
+Represents a single measurement or data point in a time series profile.
+
+| Property | Type | Description | Required | Example |
+| :--- | :--- | :--- | :--- | :--- |
+| **`ts`** | `integer` | **Timestamp** of given measurement in **unix timestamp** format. | Yes | `1764627480` |
+| **`value`** | `number` | Measured value. | Yes | `0.1` |
+| **`profile_type`** | `string` | What the measured value represents (e.g., active power). | Yes | `SOME_LINE_COMPONENT` |
+| **`power_type`** | `string` | Active or reactive, not strict, can contain 'active' or 'reactive' as substring. | Yes | `active` |
+| `[extra_fields]` | Any | All extra fields are used as a label (e.g., `bus`, `line`). | No | `{"bus": "SOME_BUS_NAME"}` |
+
+#### `JsonTimeseries`
+A full time series structure, used for results.
+
+| Property | Type | Description | Required | Example |
+| :--- | :--- | :--- | :--- | :--- |
+| **`time`** | `array` of `integer` | **Required.** A list of time values, one of integer timesteps or unix timestamps. | Yes | `[0.0, 0.5, 1.0, 1.5, 2.0]` |
+| `[series_name]` | `array` of `number` | Keys map to time series names (e.g., sensor\_x), values are the measurement list. | No | `{"sensor_x": [10.1, 10.2, 10.3, 10.4, 10.5]}` |
+
+#### `UploadFileResult`
+Standard response model after a successful file upload or deletion.
+
+| Property | Type | Description | Example |
+| :--- | :--- | :--- | :--- |
+| **`filename`** | `string` | Named resource result: filename, simulation name, profile/result name. | `sim-run-1` |
+
+#### `ListResult`
+Standard response model for listing resource names.
+
+| Property | Type | Description | Example |
+| :--- | :--- | :--- | :--- |
+| **`lst`** | `array` of `string` | String list result. | `["cim-data-1", "cim-data-2"]` |
+
+#### Other Models
+
+* **`JsonTimeseriesResult`**: Contains the full `JsonTimeseries` object under the key `result`.
+* **`HTTPValidationError`**: Standard FastAPI model for validation errors.
+* **`ValidationError`**: Details of a validation error.
+* **`Body_post_xml_xml_post`**: Multipart model for posting XML files.
+* **`Body_post_ts_ts_profile_post`**: Multipart model for posting TS profile files.
